@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Burtin's Antibiotic Data Visualization</title>
+    <!-- Load d3.js -->
+    <script src="https://d3js.org/d3.v6.js"></script>
+  </head>
+  <body>
+    <!-- Add a svg area, empty -->
+    <div id="viz"></div>
+
+    <div id="mobileRestrictionMessage">
+      <p class="poppins-medium">
+        I refuse to open my Visualization on sub-standard screen sizes.
+      </p>
+      <p class="poppins-bold">Open it on a large screen.</p>
+    </div>
+
+    <script>
+      // JavaScript to restrict access on mobile screens
+      document.addEventListener("DOMContentLoaded", function () {
+        var minWidth = 768; // Define the minimum width for non-mobile devices
+        if (window.innerWidth < minWidth) {
+          document.getElementById("viz").style.display = "none"; // Hide content
+          document.getElementById("mobileRestrictionMessage").style.display =
+            "block"; // Show restriction message
+        }
+      });
+    </script>
+
+    <!-- Load DATA -->
+    <script src="data.js" type="text/javascript"></script>
+
+    <!-- Load the main circle generation script -->
+    <script src="mainCircle.js" type="text/javascript"></script>
+
+    <!-- Load the Gram Negative Colouring script -->
+    <script src="negativeArc.js" type="text/javascript"></script>
+
+    <!-- Load the Gram Positive Colouring Script-->
+    <script src="positiveArc.js" type="text/javascript"></script>
+
+    <!-- Load the Script to generate the Antibiotic circles -->
+    <script src="antibiotics.js" type="text/javascript"></script>
+
+    <!-- Load the Script to generate the points of best antibiotics -->
+    <script src="bestAntibiotic.js" type="text/javascript"></script>
+
+    <!-- Load the best-2 circle generation script-->
+    <script src="best2Antibiotic.js" type="text/javascript"></script>
+
+    <!-- Load the best-2 arc generation scripts-->
+    <script src="best2AntibioticArc.js" type="text/javascript"></script>
+
+    <!-- Load the bacteria labels generation scripts -->
+    <script src="bacteriaLabels.js" type="text/javascript"></script>
+
+    <!-- Load the antibiotic labels generation scripts -->
+    <script src="antibioticLabels.js" type="text/javascript"></script>
+
+    <style>
+      @font-face {
+        font-family: "Poppins-Bold";
+        src: url("Poppins-Bold.ttf");
+      }
+      @font-face {
+        font-family: "Poppins-Regular";
+        src: url("Poppins-Regular.ttf");
+      }
+      @font-face {
+        font-family: "Poppins-Medium";
+        src: url("Poppins-Medium.ttf");
+      }
+      @font-face {
+        font-family: "Poppins-SemiBold";
+        src: url("Poppins-SemiBold.ttf");
+      }
+
+      .poppins-regular {
+        font-family: "Poppins-Regular", sans-serif;
+        font-weight: 400;
+        font-style: normal;
+        font-size: 15px;
+      }
+
+      .poppins-medium {
+        font-family: "Poppins-Medium", sans-serif;
+        font-weight: 500;
+        font-style: normal;
+      }
+
+      .poppins-semibold {
+        font-family: "Poppins-SemiBold", sans-serif;
+        font-weight: 600;
+        font-style: normal;
+      }
+
+      .poppins-bold {
+        font-family: "Poppins-Bold", sans-serif;
+        font-weight: 700;
+        font-style: normal;
+      }
+      #mobileRestrictionMessage {
+        display: none;
+        text-align: center;
+        margin-top: 50px;
+      }
+    </style>
+
+    <script>
+      const epislon = 0.0001;
+
+      // Get the height and width of the current viewport
+      var viewportWidth = Math.max(
+        document.documentElement.clientWidth || 0,
+        window.innerWidth || 0
+      );
+      var viewportHeight = Math.max(
+        document.documentElement.clientHeight || 0,
+        window.innerHeight || 0
+      );
+
+      console.log("Viewport width:", viewportWidth);
+      console.log("Viewport height:", viewportHeight);
+
+      // set the dimensions and margins of the graph
+      const margin = { top: 10, right: 40, bottom: 30, left: 30 },
+        width = viewportWidth - margin.left - margin.right,
+        height = viewportHeight - margin.top - margin.bottom;
+
+      d3.select("body").style("background", "#ecebdf");
+
+      // append the svg object to the body of the page
+      let viz = d3
+        .select("#viz")
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      const angle = (2 * Math.PI) / 16;
+
+      generateMainCircle(viz, width, height);
+
+      generateGramPositiveArc(d3, viz, width, height);
+
+      generateGramNegativeArc(d3, viz, width, height);
+
+      generateAntiobioticCircles(d3, viz, DATA, width, height);
+
+      generateLineGraph(d3, viz, DATA, width, height);
+
+      generateBestTwoAntibioticsCircle(d3, viz, width, height);
+
+      generateBestTwoAntibioticArcs(d3, viz, DATA, width, height);
+
+      generateBacteriaLabels(d3, viz, width, height);
+
+      generateAntibioticLabels(d3, viz, width, height);
+
+      // const radius = height / 2.5;
+      // const centerX = width / 2;
+      // const centerY = height / 2;
+      // viz
+      //   .append("circle")
+      //   .attr("cx", centerX + (radius + 85) * Math.sin(5 * angle * 0.5))
+      //   .attr("cy", centerY - (radius + 85) * Math.cos(5 * angle * 0.5))
+      //   .attr("r", 85)
+      //   .attr("fill", "none")
+      //   .attr("stroke", "black")
+      //   .attr("stroke-width", 2);
+      // viz
+      //   .append("circle")
+      //   .attr("cx", centerX + (radius + 85) * Math.sin(7 * angle * 0.5))
+      //   .attr("cy", centerY - (radius + 85) * Math.cos(7 * angle * 0.5))
+      //   .attr("r", 85)
+      //   .attr("fill", "none")
+      //   .attr("stroke", "black")
+      //   .attr("stroke-width", 2);
+
+      // viz
+      //   .append("circle")
+      //   .attr("cx", centerX + (radius + 2 * 85 + 5) * Math.sin(7 * angle * 0.5))
+      //   .attr("cy", centerY - (radius + 2 * 85 + 5) * Math.cos(7 * angle * 0.5))
+      //   .attr("r", 5)
+      //   .attr("fill", "none")
+      //   .attr("stroke", "black")
+      //   .attr("stroke-width", 1);
+    </script>
+  </body>
+</html>
